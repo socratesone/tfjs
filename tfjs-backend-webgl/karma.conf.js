@@ -21,6 +21,7 @@ const karmaTypescriptConfig = {
   coverageOptions: {instrumentation: false},
   reports: {},
   bundlerOptions: {
+    sourceMap: true,
     // Ignore the import of the `worker_threads` package used in a core test
     // meant to run in node.
     exclude: ['worker_threads'],
@@ -55,7 +56,8 @@ const devConfig = {
 const browserstackConfig = {
   ...devConfig,
   hostname: 'bs-local.com',
-  singleRun: true
+  singleRun: true,
+  port: 9886
 };
 
 module.exports = function(config) {
@@ -90,7 +92,9 @@ module.exports = function(config) {
     browserStack: {
       username: process.env.BROWSERSTACK_USERNAME,
       accessKey: process.env.BROWSERSTACK_KEY,
-      timeout: 1800
+      timeout: 1800,
+      tunnelIdentifier:
+          `tfjs_backend_webgl_${Date.now()}_${Math.floor(Math.random() * 1000)}`
     },
     captureTimeout: 3e5,
     reportSlowerThan: 500,

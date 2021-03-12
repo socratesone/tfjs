@@ -45,8 +45,10 @@ describe('tfjs union sub-packages', () => {
   });
 });
 
-describe('ops', async () => {
-  await tf.setBackend('cpu');
+describe('ops', () => {
+  beforeAll(async () => {
+    await tf.setBackend('cpu');
+  });
 
   it('should support basic math', () => {
     tf.tidy(() => {
@@ -92,5 +94,34 @@ describe('backends are registered', () => {
 
   it('should not find fake backend', () => {
     expect(tf.findBackend('fake')).toBeFalsy();
+  });
+});
+
+describe('chaining api is present', () => {
+  it('tensor should have max method', () => {
+    tf.tidy(() => {
+      const a = tf.scalar(3);
+      expect(a.max).toBeDefined();
+    });
+  });
+
+  it('tensor should have resizeBilinear method', () => {
+    tf.tidy(() => {
+      const a = tf.scalar(3);
+      expect(a.resizeBilinear).toBeDefined();
+    });
+  });
+});
+
+
+describe('gradients are registered', () => {
+  it('SplitV gradient should be registered', () => {
+    const gradient = tf.getGradient(tf.SplitV);
+    expect(gradient).toBeDefined();
+  });
+
+  it('fake gradient does not exist', () => {
+    const gradient = tf.getGradient('NotARealKernel');
+    expect(gradient).toBeUndefined();
   });
 });

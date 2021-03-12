@@ -19,6 +19,7 @@ const karmaTypescriptConfig = {
   tsconfig: 'tsconfig.json',
   coverageOptions: {instrumentation: false},
   bundlerOptions: {
+    sourceMap: true,
     acornOptions: {ecmaVersion: 8},
     transforms: [
       require('karma-typescript-es6-transform')({
@@ -44,27 +45,44 @@ const devConfig = {
       served: true,
       nocache: true
     },
+    {
+      pattern: 'integration_tests/metadata/**/*',
+      watched: true,
+      included: false,
+      served: true,
+      nocache: true
+    },
     // Serve program bundles as files
     {
-      pattern: 'custom_bundle/blazeface/dist/**/*',
+      pattern: 'custom_module/*/dist/**/*',
+      watched: true,
+      included: false,
+      served: true,
+      nocache: true
+    },
+    // Serve model assets as files
+    {
+      pattern: 'custom_module/*/model/**/*',
       watched: true,
       included: false,
       served: true,
       nocache: true
     },
   ],
+  exclude: ['integration_tests/custom_bundle_test.ts'],
   include: ['integration_tests/**/*.ts'],
   preprocessors: {
     '**/*.ts': ['karma-typescript'],  // *.tsx for React Jsx
   },
   karmaTypescriptConfig,
-  reporters: ['progress', 'karma-typescript']
+  reporters: ['spec', 'karma-typescript']
 };
 
 const browserstackConfig = {
   ...devConfig,
   hostname: 'bs-local.com',
-  singleRun: true
+  singleRun: true,
+  port: 9816
 };
 
 module.exports = function(config) {
@@ -96,7 +114,9 @@ module.exports = function(config) {
     browsers: ['Chrome'],
     browserStack: {
       username: process.env.BROWSERSTACK_USERNAME,
-      accessKey: process.env.BROWSERSTACK_KEY
+      accessKey: process.env.BROWSERSTACK_KEY,
+      timeout: 1800,
+      tunnelIdentifier: `e2e_${Date.now()}_${Math.floor(Math.random() * 1000)}`
     },
     captureTimeout: 3e5,
     reportSlowerThan: 500,
@@ -150,6 +170,7 @@ module.exports = function(config) {
         os_version: '10'
       }
     },
-    client: {jasmine: {random: false}, args: args}
+    client: {jasmine: {random: false}, args: args, captureConsole: true},
+    logLevel: 'info'
   });
 };

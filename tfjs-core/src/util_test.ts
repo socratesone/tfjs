@@ -38,6 +38,26 @@ describe('Util', () => {
     expect(util.arraysEqual([1, 2, 5], [1, 2])).toBe(false);
   });
 
+  it('Arrays shuffle randomly', () => {
+    // Create 1000 numbers ordered
+    const a = Array.apply(0,{length:1000}).map(Number.call,Number).slice(1);
+    const b = [].concat(a); // copy ES5 style
+    util.shuffle(a);
+    expect(a).not.toEqual(b);
+    expect(a.length).toEqual(b.length);
+  });
+
+  it('Multiple arrays shuffle together', () => {
+    // Create 1000 numbers ordered
+    const a = Array.apply(0,{length:1000}).map(Number.call,Number).slice(1);
+    const b = [].concat(a); // copies
+    const c = [].concat(a);
+    util.shuffleCombo(a, b);
+    expect(a).not.toEqual(c);
+    expect(a).toEqual(b);
+    expect(a.length).toEqual(c.length);
+  });
+
   it('Is integer', () => {
     expect(util.isInt(0.5)).toBe(false);
     expect(util.isInt(1)).toBe(true);
@@ -585,5 +605,14 @@ describe('util.decodeString', () => {
     } else {
       expect(s).toEqual(expected);
     }
+  });
+
+  it('assert promise', () => {
+    const promise = new Promise(() => {});
+    expect(util.isPromise(promise)).toBeTruthy();
+    const promise2 = {then: () => {}};
+    expect(util.isPromise(promise2)).toBeTruthy();
+    const promise3 = {};
+    expect(util.isPromise(promise3)).toBeFalsy();
   });
 });

@@ -229,6 +229,7 @@ describeWithFlags('Webgl backend disposal', WEBGL_ENVS, () => {
 
     const backend = new MathBackendWebGL();
     tf.registerBackend('test-disposal', () => backend);
+    tf.copyRegisteredKernels('webgl', 'test-disposal');
     tf.setBackend('test-disposal');
     // Compile and run a program.
     tf.zeros([1000]).sqrt().dataSync();
@@ -248,6 +249,7 @@ describeWithFlags('Webgl backend disposal', WEBGL_ENVS, () => {
 
     const backend = new MathBackendWebGL();
     tf.registerBackend('test-disposal', () => backend);
+    tf.copyRegisteredKernels('webgl', 'test-disposal');
     tf.setBackend('test-disposal');
     // Compile and run a program.
     tf.zeros([1000]).sqrt().dataSync();
@@ -266,6 +268,7 @@ describeWithFlags('Webgl backend disposal', WEBGL_ENVS, () => {
     tf.ENV.set('IS_TEST', false);
 
     tf.registerBackend('test-disposal', () => new MathBackendWebGL());
+    tf.copyRegisteredKernels('webgl', 'test-disposal');
     tf.setBackend('test-disposal');
     // Compile and run a program.
     tf.zeros([1000]).sqrt().dataSync();
@@ -276,6 +279,7 @@ describeWithFlags('Webgl backend disposal', WEBGL_ENVS, () => {
 
     // Re-register a backend.
     tf.registerBackend('test-disposal', () => new MathBackendWebGL());
+    tf.copyRegisteredKernels('webgl', 'test-disposal');
     tf.setBackend('test-disposal');
     // Compile and run a program.
     tf.zeros([1000]).sqrt().dataSync();
@@ -555,22 +559,37 @@ describeWithFlags('memory webgl', WEBGL_ENVS, () => {
   });
 });
 
+describeWithFlags('manual gl flush', WEBGL_ENVS, () => {
+  it('works when manual gl flush is enabled', async () => {
+    const savedGlThreshold = tf.env().get('WEBGL_FLUSH_THRESHOLD') as number;
+    tf.env().set('WEBGL_FLUSH_THRESHOLD', 1);
+    const a = tf.tensor2d([1, 2, 3, 4, 5, 6], [2, 3]);
+    const b = tf.tensor2d([1, 1, -3, 2, 2, 1], [2, 3]);
+
+    const result = tf.div(tf.div(tf.mul(a, b), a), b);
+    expectArraysClose(await result.data(), [1, 1, 1, 1, 1, 1]);
+    tf.env().set('WEBGL_FLUSH_THRESHOLD', savedGlThreshold);
+  });
+});
 // We do not yet fully support half float backends. These tests are a starting
 // point.
 describeWithFlags('backend without render float32 support', WEBGL_ENVS, () => {
   const savedRenderFloat32Flag =
       tf.env().getBool('WEBGL_RENDER_FLOAT32_ENABLED');
+  const customWebGLBackendName = 'half-float-webgl';
 
   beforeAll(() => {
     tf.env().set('WEBGL_RENDER_FLOAT32_ENABLED', false);
   });
 
   beforeEach(() => {
-    tf.registerBackend('half-float-webgl', () => new MathBackendWebGL(null));
+    tf.copyRegisteredKernels('webgl', customWebGLBackendName);
+    tf.registerBackend(
+        customWebGLBackendName, () => new MathBackendWebGL(null));
   });
 
   afterEach(() => {
-    tf.removeBackend('half-float-webgl');
+    tf.removeBackend(customWebGLBackendName);
   });
 
   afterAll(() => {
@@ -578,7 +597,7 @@ describeWithFlags('backend without render float32 support', WEBGL_ENVS, () => {
   });
 
   it('basic usage', async () => {
-    tf.setBackend('half-float-webgl');
+    tf.setBackend(customWebGLBackendName);
 
     const a = tf.tensor2d([1, 2], [1, 2]);
     const b = tf.tensor2d([1, 2], [1, 2]);
@@ -587,7 +606,7 @@ describeWithFlags('backend without render float32 support', WEBGL_ENVS, () => {
   });
 
   it('disposing tensors should not cause errors', () => {
-    tf.setBackend('half-float-webgl');
+    tf.setBackend(customWebGLBackendName);
     expect(() => tf.tidy(() => {
       const a = tf.tensor2d([1, 2], [1, 2]);
       const b = tf.tensor2d([1, 2], [1, 2]);

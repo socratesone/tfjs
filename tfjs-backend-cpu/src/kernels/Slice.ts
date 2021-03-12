@@ -15,10 +15,45 @@
  * =============================================================================
  */
 
-import {KernelConfig, KernelFunc, NumericDataType, Slice, slice_util, SliceAttrs, SliceInputs, TensorInfo, TypedArray, util} from '@tensorflow/tfjs-core';
+import {backend_util, BackendValues, buffer, DataType, KernelConfig, KernelFunc, Slice, slice_util, SliceAttrs, SliceInputs, TensorInfo, TypedArray, util} from '@tensorflow/tfjs-core';
 
 import {MathBackendCPU} from '../backend_cpu';
 import {assertNotComplex} from '../cpu_util';
+
+export function sliceImpl(
+    vals: BackendValues, begin: number[], size: number[], shape: number[],
+    dtype: DataType): BackendValues {
+  const isContinous = slice_util.isSliceContinous(shape, begin, size);
+  const length = util.sizeFromShape(size);
+  const xStrides = util.computeStrides(shape);
+
+  if (isContinous) {
+    const flatOffset = slice_util.computeFlatOffset(begin, xStrides);
+
+    if (dtype === 'string') {
+      return (vals as Uint8Array[]).slice(flatOffset, flatOffset + length);
+    }
+
+    return (vals as TypedArray).subarray(flatOffset, flatOffset + length);
+  }
+
+  const decodedData = dtype === 'string' ?
+      backend_util.fromUint8ToStringArray(vals as Uint8Array[]) :
+      vals as TypedArray;
+
+  const inBuf = buffer(shape, dtype, decodedData);
+  const outBuf = buffer(size, dtype);
+  for (let i = 0; i < outBuf.size; ++i) {
+    const outLoc = outBuf.indexToLoc(i);
+    const inLoc = outLoc.map((idx: number, j) => idx + begin[j]);
+    outBuf.set(inBuf.get(...inLoc), ...outLoc);
+  }
+
+  if (dtype === 'string') {
+    return backend_util.fromStringArrayToUint8(outBuf.values as string[]);
+  }
+  return outBuf.values as TypedArray;
+}
 
 export function slice(
     args: {inputs: SliceInputs, backend: MathBackendCPU, attrs: SliceAttrs}):
@@ -29,34 +64,11 @@ export function slice(
 
   assertNotComplex(x, 'slice');
 
-  const xRank = x.shape.length;
-  const xStrides = util.computeStrides(x.shape);
-
   const [$begin, $size] = slice_util.parseSliceParams(x, begin, size);
   slice_util.assertParamsValid(x, $begin, $size);
 
-  const isContinous = slice_util.isSliceContinous(x.shape, $begin, $size);
-  const vals = backend.data.get(x.dataId).values as TypedArray;
-  const length = util.sizeFromShape($size);
-
-  if (isContinous) {
-    const flatOffset = slice_util.computeFlatOffset($begin, xStrides);
-    const resultVals = vals.subarray(flatOffset, flatOffset + length);
-    return backend.makeTensorInfo($size, x.dtype, resultVals);
-  }
-
-  const outVals =
-      util.getTypedArrayFromDType(x.dtype as NumericDataType, length);
-
-  for (let i = 0; i < length; ++i) {
-    const rank = $size.length;
-    const strides = util.computeStrides($size);
-    const loc = util.indexToLoc(i, rank, strides);
-    const xLoc = loc.map((idx: number, j) => idx + $begin[j]);
-    const xIndex = util.locToIndex(xLoc, xRank, xStrides);
-    outVals[i] = vals[xIndex];
-  }
-
+  const vals = backend.data.get(x.dataId).values;
+  const outVals = sliceImpl(vals, $begin, $size, x.shape, x.dtype);
   return backend.makeTensorInfo($size, x.dtype, outVals);
 }
 

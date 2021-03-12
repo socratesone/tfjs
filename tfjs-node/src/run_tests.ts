@@ -17,6 +17,10 @@
 
 // We import index.ts so that the Node backend gets registered.
 import './index';
+// tslint:disable-next-line: no-imports-from-dist
+import '@tensorflow/tfjs-core/dist/public/chained_ops/register_all_chained_ops';
+// tslint:disable-next-line: no-imports-from-dist
+import '@tensorflow/tfjs-core/dist/register_all_gradients';
 
 import * as tf from '@tensorflow/tfjs';
 // tslint:disable-next-line:no-imports-from-dist
@@ -79,7 +83,17 @@ const IGNORE_LIST: string[] = [
   'conv2d test-tensorflow {} x=[2,1,2,2] f=[2,2,1,1] s=1 d=1 p=same NCHW',
   'conv2d test-tensorflow {} gradient x=[1,1,3,3] f=[2,2,1,1] s=1 p=0 NCHW',
   'conv2d test-tensorflow {} gradient x=[2,1,3,3] f=[2,2,1,1] s=1 p=0 NCHW',
-  'maxPoolWithArgmax', 'rotate', 'flipLeftRight'
+  'maxPoolWithArgmax', 'rotate', 'flipLeftRight', 'unique',
+  // libtensorflow does not yet support tf.matmul with broadcast
+  'broadcast with unequal batch dims', 'broadcast with unequal ranks',
+  // tslint:disable-next-line:max-line-length
+  'pool test-tensorflow {} max x=[2,2,3] f=[1,1] s=2 p=1 fractional outputs default rounding',
+  // tslint:disable-next-line:max-line-length
+  'pool test-tensorflow {} avg x=[2,2,3] f=[1,1] s=2 p=1 fractional outputs default rounding',
+  // not available in tf yet.
+  'denseBincount',
+  // only available in tf addon.
+  'image.transform'
 ];
 
 if (process.platform === 'win32') {

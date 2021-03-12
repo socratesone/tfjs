@@ -67,7 +67,8 @@ const devConfig = {
 const browserstackConfig = {
   ...devConfig,
   hostname: 'bs-local.com',
-  singleRun: true
+  singleRun: true,
+  port: 9206
 };
 
 module.exports = function(config) {
@@ -94,12 +95,18 @@ module.exports = function(config) {
     proxies: {
       '/base/node_modules/karma-typescript/dist/client/tfjs-backend-wasm.wasm':
           '/base/wasm-out/tfjs-backend-wasm.wasm',
+      '/base/node_modules/karma-typescript/dist/client/tfjs-backend-wasm-simd.wasm':
+          '/base/wasm-out/tfjs-backend-wasm-simd.wasm',
+      '/base/node_modules/karma-typescript/dist/client/tfjs-backend-wasm-threaded-simd.wasm':
+          '/base/wasm-out/tfjs-backend-wasm-threaded-simd.wasm',
     },
     browsers: ['Chrome'],
     browserStack: {
       username: process.env.BROWSERSTACK_USERNAME,
       accessKey: process.env.BROWSERSTACK_KEY,
-      timeout: 1800
+      timeout: 1800,
+      tunnelIdentifier:
+          `tfjs_backend_wasm_${Date.now()}_${Math.floor(Math.random() * 1000)}`
     },
     captureTimeout: 3e5,
     reportSlowerThan: 500,
@@ -153,7 +160,18 @@ module.exports = function(config) {
         browser_version: '77.0',
         os: 'Windows',
         os_version: '10'
-      }
+      },
+      chrome_simd: {
+        base: 'Chrome',
+        flags: [
+	  '--enable-features=WebAssemblySimd',
+	  '--disable-features=WebAssemblyThreads',
+	]
+      },
+      chrome_threaded_simd: {
+        base: 'Chrome',
+        flags: ['--enable-features=WebAssemblySimd,WebAssemblyThreads']
+      },
     },
     client: {jasmine: {random: false}, args: args},
   })

@@ -75,7 +75,9 @@ describeWithFlags('LocalStorage', BROWSER_ENVS, () => {
     format: 'layers-model',
     generatedBy: 'TensorFlow.js v0.0.0',
     convertedBy: '1.13.1',
-    userDefinedMetadata: {}
+    signature: null,
+    userDefinedMetadata: {},
+    modelInitializer: {}
   };
 
   const artifactsV0: tf.io.ModelArtifacts = {
@@ -176,6 +178,7 @@ describeWithFlags('LocalStorage', BROWSER_ENVS, () => {
     expect(loaded.generatedBy).toEqual('TensorFlow.js v0.0.0');
     expect(loaded.convertedBy).toEqual('1.13.1');
     expect(loaded.userDefinedMetadata).toEqual({});
+    expect(loaded.modelInitializer).toEqual({});
   });
 
   it('Save-load round trip succeeds: v0 format', async () => {

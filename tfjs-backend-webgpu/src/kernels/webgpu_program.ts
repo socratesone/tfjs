@@ -21,10 +21,8 @@ import {Glslang} from '@webgpu/glslang/dist/web-devel/glslang.onefile';
 import * as shader_preprocessor from '../shader_preprocessor';
 
 export interface WebGPUProgram {
-  // The unique key to distinguish different shader source code. If shaderKey is
-  // not specified, use userCode to replace.
-  shaderKey?: string;
-  userCode: string;
+  // The unique key to distinguish different shader source code.
+  shaderKey: string;
   outputShape: number[];
   // dispatchLayout enumerates how tensor dimensions are distributed among
   // dispatch x,y,z dimensions.
@@ -41,6 +39,8 @@ export interface WebGPUProgram {
   // in a thread group. Individual dimensions determines thread layout within
   // the group.
   workGroupSize?: [number, number, number];
+  isVec4?: boolean;
+  getUserCode: () => string;
 }
 
 export interface WebGPUBinary {
@@ -52,27 +52,24 @@ export interface TensorData {
   dtype: DataType;
 }
 
-export interface BindingInfo {
-  resource: {offset: number, size: number, buffer: GPUBuffer};
-}
-
 export const makeBindGroup =
     (device: GPUDevice, bindGroupLayout: GPUBindGroupLayout,
-     inputs: BindingInfo[], output: BindingInfo, uniforms?: BindingInfo) => {
+     inputs: GPUBindingResource[], output: GPUBindingResource,
+     uniforms?: GPUBindingResource) => {
       const bindings = [output, ...inputs];
       if (uniforms) {
         bindings.push(uniforms);
       }
       return device.createBindGroup({
         layout: bindGroupLayout,
-        entries: bindings.map((b, i) => ({binding: i, resource: b.resource})),
+        entries: bindings.map((b, i) => ({binding: i, resource: b})),
       });
     };
 
 export const compileProgram =
     (glslang: Glslang, device: GPUDevice, program: WebGPUProgram,
      inputsData: shader_preprocessor.InputInfo[], output: TensorInfo,
-     uniforms?: BindingInfo): WebGPUBinary => {
+     uniforms?: GPUBindingResource): WebGPUBinary => {
       const outputData = {dtype: output.dtype, shape: output.shape};
 
       const source =
@@ -96,6 +93,6 @@ export function makeShaderKey<R extends Rank>(
     types: string[]): string {
   const key = (program.workGroupSize ? program.workGroupSize.join(',') : '') +
       shapes.join(',') + types.join(',') + program.variableNames.join(',') +
-      (program.shaderKey ? program.shaderKey : program.userCode);
+      program.shaderKey;
   return key;
 }

@@ -138,6 +138,7 @@ describeWithFlags('http-load fetch', NODE_ENVS, () => {
               format: 'tfjs-layers',
               generatedBy: '1.15',
               convertedBy: '1.3.1',
+              signature: null,
               userDefinedMetadata: {}
             }),
             contentType: 'application/json'
@@ -192,7 +193,10 @@ describeWithFlags('http-save', CHROME_ENVS, () => {
     weightData: weightData1,
     format: 'layers-model',
     generatedBy: 'TensorFlow.js v0.0.0',
-    convertedBy: null
+    convertedBy: null,
+    signature: null,
+    userDefinedMetadata: {},
+    modelInitializer: {}
   };
 
   let requestInits: RequestInit[] = [];
@@ -345,6 +349,7 @@ describeWithFlags('http-save', CHROME_ENVS, () => {
             expect(modelJSON.generatedBy).toEqual('TensorFlow.js v0.0.0');
             expect(modelJSON.convertedBy).toEqual(null);
             expect(modelJSON.modelTopology).toEqual(modelTopology1);
+            expect(modelJSON.modelInitializer).toEqual({});
             expect(modelJSON.weightsManifest.length).toEqual(1);
             expect(modelJSON.weightsManifest[0].weights).toEqual(weightSpecs1);
 
@@ -470,7 +475,9 @@ describeWithFlags('http-load', BROWSER_ENVS, () => {
                 format: 'tfjs-graph-model',
                 generatedBy: '1.15',
                 convertedBy: '1.3.1',
-                userDefinedMetadata: {}
+                signature: null,
+                userDefinedMetadata: {},
+                modelInitializer: {}
               }),
               contentType: 'application/json'
             },
@@ -487,6 +494,7 @@ describeWithFlags('http-load', BROWSER_ENVS, () => {
       expect(modelArtifacts.generatedBy).toEqual('1.15');
       expect(modelArtifacts.convertedBy).toEqual('1.3.1');
       expect(modelArtifacts.userDefinedMetadata).toEqual({});
+      expect(modelArtifacts.modelInitializer).toEqual({});
 
       expect(new Float32Array(modelArtifacts.weightData)).toEqual(floatData);
       expect(Object.keys(requestInits).length).toEqual(2);

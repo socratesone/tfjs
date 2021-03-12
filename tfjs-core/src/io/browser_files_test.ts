@@ -76,7 +76,7 @@ const artifacts1: tf.io.ModelArtifacts = {
   format: 'layers-model',
   generatedBy: 'TensorFlow.js v0.0.0',
   convertedBy: null,
-  userDefinedMetadata: {}
+  modelInitializer: {}
 };
 
 describeWithFlags('browserDownloads', BROWSER_ENVS, () => {
@@ -134,6 +134,7 @@ describeWithFlags('browserDownloads', BROWSER_ENVS, () => {
     expect(modelTopologyAndWeightsManifest.generatedBy)
         .toEqual('TensorFlow.js v0.0.0');
     expect(modelTopologyAndWeightsManifest.convertedBy).toEqual(null);
+    expect(modelTopologyAndWeightsManifest.modelInitializer).toEqual({});
     const weightsManifest = modelTopologyAndWeightsManifest.weightsManifest as
         WeightsManifestConfig;
     expect(weightsManifest.length).toEqual(1);
@@ -288,7 +289,7 @@ describeWithFlags('browserFiles', BROWSER_ENVS, () => {
       format: 'layers-model',
       generatedBy: 'TensorFlow.js v0.0.0',
       convertedBy: '1.13.1',
-      userDefinedMetadata: {}
+      modelInitializer: {}
     };
     const jsonFile = new File(
         [JSON.stringify(weightsTopologyAndManifest)], 'model.json',
@@ -301,7 +302,7 @@ describeWithFlags('browserFiles', BROWSER_ENVS, () => {
     expect(modelArtifacts.format).toEqual('layers-model');
     expect(modelArtifacts.generatedBy).toEqual('TensorFlow.js v0.0.0');
     expect(modelArtifacts.convertedBy).toEqual('1.13.1');
-    expect(modelArtifacts.userDefinedMetadata).toEqual({});
+    expect(modelArtifacts.modelInitializer).toEqual({});
 
     expect(new Uint8Array(modelArtifacts.weightData))
         .toEqual(new Uint8Array(weightData1));

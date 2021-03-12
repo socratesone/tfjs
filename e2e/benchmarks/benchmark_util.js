@@ -44,34 +44,81 @@ function generateInput(model) {
     throw new Error('The model.inputs cannot be found.');
   }
 
+  const inputDefs = model.inputs.map((inputNode, inputNodeIndex) => {
+    // Replace -1 or null in input tensor shape.
+    const inputShape = inputNode.shape.map(shapeValue => {
+      if (shapeValue == null || shapeValue < 0) {
+        return 1;
+      } else {
+        return shapeValue;
+      }
+    });
+    return {
+      shape: inputShape,
+      name: inputNode.name,
+      dtype: inputNode.dtype,
+      range: [0, 1000]
+    };
+  });
+
+  return generateInputFromDef(inputDefs, model instanceof tf.GraphModel);
+}
+
+/**
+ * Generates a random input for input definition.
+ *
+ * ```js
+ * const input = generateInput(inputDefs);
+ *
+ * console.log(`Generated input: ${Object.values(input)}`);
+ * console.log(`Prediction for the generated input: ${prediction}`);
+ * ```
+ *
+ * @param inputDefs The input definition that is used to generate the input.
+ * @param isForGraphModel flag for whether to generate inputs for GraphModel
+ */
+function generateInputFromDef(inputDefs, isForGraphModel = false) {
+  if (inputDefs == null) {
+    throw new Error('The inputDef cannot be found.');
+  }
+
   const tensorArray = [];
   try {
-    model.inputs.forEach((inputNode, inputNodeIndex) => {
-      // Replace -1 or null in input tensor shape.
-      const inputShape = inputNode.shape.map(shapeValue => {
-        if (shapeValue == null || shapeValue < 0) {
-          return 1;
-        } else {
-          return shapeValue;
-        }
-      });
+    inputDefs.forEach((inputDef, inputDefIndex) => {
+      const inputShape = inputDef.shape;
 
       // Construct the input tensor.
       let inputTensor;
-      if (inputNode.dtype === 'float32' || inputNode.dtype === 'int32') {
-        inputTensor = tf.randomNormal(inputShape, 0, 1000, inputNode.dtype);
+      if (inputDef.dtype === 'float32' || inputDef.dtype === 'int32') {
+        // We assume a bell curve normal distribution. In this case,
+        // we use below approximation:
+        // mean ~= (min + max) / 2
+        // std ~= (max - min) / 4
+        // Note: for std, our approximation is based on the fact that
+        // 95% of the data is within the range of 2 stds above and
+        // below the mean. So 95% of the data falls in the range of
+        // 4 stds.
+        const min = inputDef.range[0];
+        const max = inputDef.range[1];
+        const mean = (min + max) / 2;
+        const std = (max - min) / 4;
+        generatedRaw = tf.randomNormal(inputShape, mean, std, inputDef.dtype);
+        // We clip the value to be within [min, max], because 5% of
+        // the data generated maybe outside of [min, max].
+        inputTensor = tf.clipByValue(generatedRaw, min, max);
+        generatedRaw.dispose();
       } else {
         throw new Error(
-            `The ${inputNode.dtype} dtype of '${inputNode.name}' input ` +
-            `at model.inputs[${inputNodeIndex}] is not supported.`);
+            `The ${inputDef.dtype} dtype of '${inputDef.name}' input ` +
+            `at model.inputs[${inputDefIndex}] is not supported.`);
       }
       tensorArray.push(inputTensor);
     });
 
     // Return tensor map for tf.GraphModel.
-    if (model instanceof tf.GraphModel) {
-      const tensorMap = model.inputNodes.reduce((map, inputName, i) => {
-        map[inputName] = tensorArray[i];
+    if (isForGraphModel) {
+      const tensorMap = inputDefs.reduce((map, inputDef, i) => {
+        map[inputDef.name] = tensorArray[i];
         return map;
       }, {});
       return tensorMap;
@@ -382,10 +429,12 @@ function aggregateKernelTime(kernels) {
 const TUNABLE_FLAG_VALUE_RANGE_MAP = {
   WEBGL_VERSION: [1, 2],
   WASM_HAS_SIMD_SUPPORT: [true, false],
+  WASM_HAS_MULTITHREAD_SUPPORT: [true, false],
   WEBGL_CPU_FORWARD: [true, false],
   WEBGL_PACK: [true, false],
   WEBGL_FORCE_F16_TEXTURES: [true, false],
   WEBGL_RENDER_FLOAT32_CAPABLE: [true, false],
+  WEBGL_FLUSH_THRESHOLD: [-1, 0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
 };
 
 /**

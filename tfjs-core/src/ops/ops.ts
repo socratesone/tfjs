@@ -38,6 +38,7 @@ export {batchNorm} from './batchnorm';
 export {batchNorm2d} from './batchnorm2d';
 export {batchNorm3d} from './batchnorm3d';
 export {batchNorm4d} from './batchnorm4d';
+export {bincount} from './bincount';
 export {broadcastTo} from './broadcast_to';
 export {buffer} from './buffer';
 export {cast} from './cast';
@@ -58,6 +59,7 @@ export {conv3dTranspose} from './conv3d_transpose';
 export {cos} from './cos';
 export {cosh} from './cosh';
 export {cumsum} from './cumsum';
+export {denseBincount} from './dense_bincount';
 export {depthToSpace} from './depth_to_space';
 export {depthwiseConv2d} from './depthwise_conv2d';
 export {diag} from './diag';
@@ -105,6 +107,7 @@ export {maximum} from './maximum';
 export {mean} from './mean';
 export {min} from './min';
 export {minimum} from './minimum';
+export {mirrorPad} from './mirror_pad';
 export {mod} from './mod';
 export {moments} from './moments';
 export {mul} from './mul';
@@ -185,6 +188,7 @@ export {tensor6d} from './tensor6d';
 export {tile} from './tile';
 export {topk} from './topk';
 export {truncatedNormal} from './truncated_normal';
+export {unique} from './unique';
 export {unsortedSegmentSum} from './unsorted_segment_sum';
 export {unstack} from './unstack';
 export {variable} from './variable';
@@ -194,8 +198,6 @@ export {zeros} from './zeros';
 export {zerosLike} from './zeros_like';
 
 export * from './boolean_mask';
-export * from './compare';
-export * from './binary_ops';
 export * from './transpose';
 export * from './norm';
 export * from './moving_average';
@@ -244,6 +246,7 @@ import {nonMaxSuppressionPadded} from './image/non_max_suppression_padded';
 import {nonMaxSuppressionPaddedAsync} from './image/non_max_suppression_padded_async';
 import {resizeBilinear} from './image/resize_bilinear';
 import {resizeNearestNeighbor} from './image/resize_nearest_neighbor';
+import {transform} from './image/transform';
 const image = {
   flipLeftRight,
   resizeNearestNeighbor,
@@ -255,7 +258,8 @@ const image = {
   nonMaxSuppressionWithScore,
   nonMaxSuppressionWithScoreAsync,
   nonMaxSuppressionPadded,
-  nonMaxSuppressionPaddedAsync
+  nonMaxSuppressionPaddedAsync,
+  transform
 };
 
 // linalg namespace
